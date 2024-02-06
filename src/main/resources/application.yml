@@ -1,0 +1,11 @@
+server:
+  shutdown: graceful
+  port: 8080
+
+spring:
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+  thymeleaf:
+    cache: false

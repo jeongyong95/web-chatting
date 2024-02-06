@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>STOMP Chatting</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.css}">
+</head>
+<body>
+<div class="container-fluid my-2 py-2">
+  <div class="d-flex justify-content-center">
+    <header class="border-bottom">
+      <h1 class="h1">채팅방</h1>
+    </header>
+  </div>
+  <main class="border-bottom">
+    <div class="list-group list-group-numbered" id="chattingList">
+      <div class="list-group-item list-group-item-info">안녕하세요!</div>
+      <div class="list-group-item list-group-item-success">안녕하세요~!</div>
+    </div>
+    <div class="d-flex justify-content-end">
+      <div class="row my-2">
+        <input class="col-8" id="inputText" type="text">
+        <div class="col-4">
+          <button class="btn btn-outline-success" id="sendButton" type="button">보내기</button>
+        </div>
+      </div>
+      <div class="text-bg-success" hidden="hidden" id="connectionState">연결됨</div>
+    </div>
+  </main>
+</div>
+<script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.js}"></script>
+<script th:src="@{/webjars/stomp__stompjs/bundles/stomp.umd.js}"></script>
+<script>
+  const client = new StompJs.Client({
+    brokerURL: 'ws://localhost:8080/handshake',
+    connectionHeaders: {
+      username: 'jeongyong',
+    },
+    debug: function (message) {
+      console.log(message)
+    },
+    reconnectDelay: 5000,
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000
+  })
+
+  const connectionState = document.getElementById('connectionState')
+  client.onConnect = function (frame) {
+    console.log(frame)
+    connectionState.hidden = false
+
+    client.subscribe('/topic/greetings', onSubscribe, {id: 'sub-001'})
+  }
+
+  client.onDisconnect = function (frame) {
+    console.log(frame)
+    connectionState.hidden = true
+  }
+
+  client.activate()
+
+  const body = {name: null};
+  document.getElementById('inputText')
+  .addEventListener('change', (event) => {
+    body.name = event.target.value
+  })
+
+  document.getElementById('sendButton')
+  .addEventListener("click", () => {
+    client.publish({
+      destination: '/app/hello', body: JSON.stringify(body)
+    })
+  })
+
+  const list = document.getElementById('chattingList')
+  const onSubscribe = (message) => {
+    console.log(message)
+    const body = JSON.parse(message.body)
+    const child = createContent(body.content)
+    list.appendChild(child)
+  }
+
+  const createContent = (content) => {
+    const child = document.createElement('div')
+    child.classList.add('list-group-item')
+    child.innerText = content
+    return child
+  }
+
+</script>
+</body>
+</html>
